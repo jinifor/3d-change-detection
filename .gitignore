@@ -1,0 +1,26 @@
+backend/.venv/
+backend/uv.lock
+
+# Python cache/build artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environment and runtime files
+.env
+.env.*
+!.env.example
+*.log
+
+# Local tool/runtime data
+.codex/data/
+.agents/**

@@ -1,0 +1,35 @@
+[project]
+name = "change-detection-backend"
+version = "0.1.0"
+description = "FastAPI and RQ worker pipeline for 3D point-cloud change detection"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.13.0",
+    "boto3>=1.34.0",
+    "fastapi>=0.115.0",
+    "geoalchemy2>=0.15.0",
+    "laspy[lazrs]>=2.5.0",
+    "numpy>=1.26.0",
+    "open3d>=0.18.0",
+    "psycopg[binary]>=3.2.0",
+    "pydantic-settings>=2.5.0",
+    "py4dgeo>=1.1.0",
+    "redis>=5.0.0",
+    "rq>=1.16.0",
+    "scikit-learn>=1.4.0",
+    "scipy>=1.12.0",
+    "shapely>=2.0.0",
+    "sqlalchemy>=2.0.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
