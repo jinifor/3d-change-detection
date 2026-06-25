@@ -62,6 +62,28 @@ export function getProject(config: ApiConfig, projectId: string): Promise<Projec
   return apiRequest<ProjectRead>(config, `/api/projects/${projectId}`);
 }
 
+export function listProjects(config: ApiConfig, status?: string): Promise<ProjectRead[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  return apiRequest<ProjectRead[]>(config, `/api/projects${query}`);
+}
+
+export function updateProject(
+  config: ApiConfig,
+  projectId: string,
+  name: string,
+): Promise<ProjectRead> {
+  return apiRequest<ProjectRead>(config, `/api/projects/${projectId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function deleteProject(config: ApiConfig, projectId: string): Promise<void> {
+  return apiRequest<void>(config, `/api/projects/${projectId}`, {
+    method: "DELETE",
+  });
+}
+
 export function startJob(
   config: ApiConfig,
   projectId: string,

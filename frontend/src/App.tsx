@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, Database, Layers3, UploadCloud } from "lucide-react";
 import { getCandidates, getProjectAssets } from "./api/client";
 import { MonitorPanel } from "./components/MonitorPanel";
+import { ProjectPanel } from "./components/ProjectPanel";
 import { SetupPanel } from "./components/SetupPanel";
 import { TopBar } from "./components/TopBar";
 import { ViewerPanel } from "./components/ViewerPanel";
@@ -46,6 +47,13 @@ export function App() {
       <TopBar />
       <main className="workspace">
         <aside className="left-rail" aria-label="Workflow">
+          <section className="panel">
+            <div className="panel-heading">
+              <Database size={17} />
+              <h2>Projects</h2>
+            </div>
+            <ProjectPanel />
+          </section>
           <section className="panel">
             <div className="panel-heading">
               <UploadCloud size={17} />

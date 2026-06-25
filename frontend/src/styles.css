@@ -28,7 +28,8 @@ body,
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -222,7 +223,9 @@ button:disabled {
 .upload-bars,
 .monitor,
 .candidate-panel,
-.layer-list {
+.layer-list,
+.project-panel,
+.project-list {
   display: grid;
   gap: 10px;
 }
@@ -236,13 +239,78 @@ button:disabled {
 
 input[type="text"],
 input[type="number"],
-input:not([type]) {
+input:not([type]),
+select {
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: #fff;
   color: #1f2933;
   padding: 8px 9px;
+}
+
+.project-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 34px;
+  gap: 8px;
+}
+
+.project-list {
+  max-height: 230px;
+  overflow: auto;
+}
+
+.project-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.project-row.selected {
+  border-color: #8fbab0;
+  background: #eef8f4;
+}
+
+.project-select {
+  display: grid;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #25323c;
+  padding: 0;
+  text-align: left;
+}
+
+.project-select strong,
+.project-select span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-select span {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.project-actions,
+.project-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-edit-form {
+  grid-column: 1 / -1;
+}
+
+.project-edit-form input {
+  flex: 1;
 }
 
 .file-grid {
@@ -276,6 +344,62 @@ input:not([type]) {
 
 .parameter-grid {
   grid-template-columns: 1fr 1fr;
+}
+
+.parameter-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.parameter-label > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.help-tooltip {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: #647783;
+  cursor: help;
+}
+
+.help-tooltip svg {
+  pointer-events: none;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  z-index: 30;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: 230px;
+  max-width: min(230px, calc(100vw - 32px));
+  border: 1px solid #b9c6cc;
+  border-radius: 7px;
+  background: #1f2933;
+  box-shadow: 0 12px 26px rgba(20, 35, 45, 0.18);
+  color: #fff !important;
+  font-size: 11px !important;
+  line-height: 1.35;
+  opacity: 0;
+  padding: 8px 9px;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+  visibility: hidden;
+  white-space: normal;
+}
+
+.help-tooltip:hover .tooltip-bubble,
+.help-tooltip:focus .tooltip-bubble {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
 }
 
 .parameter-grid input {
@@ -335,6 +459,10 @@ input:not([type]) {
   background: #fff;
   color: #27343d;
   padding: 0;
+}
+
+.icon-button.danger {
+  color: var(--red);
 }
 
 .tool-button {

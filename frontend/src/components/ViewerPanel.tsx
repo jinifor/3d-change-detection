@@ -16,6 +16,7 @@ export function ViewerPanel() {
   const lidarRef = useRef<LidarControlHandle | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const loadedSignatureRef = useRef("");
+  const assetSignatureRef = useRef("");
   const [lidarState, setLidarState] = useState("idle");
   const [lidarError, setLidarError] = useState<string | null>(null);
 
@@ -83,6 +84,7 @@ export function ViewerPanel() {
     mapRef.current = map;
     return () => {
       loadedSignatureRef.current = "";
+      assetSignatureRef.current = "";
       overlayRef.current?.finalize();
       overlayRef.current = null;
       lidarRef.current = null;
@@ -141,6 +143,13 @@ export function ViewerPanel() {
     const lidar = lidarRef.current;
     if (!lidar || !assets) return;
     const lidarControl = lidar;
+    const assetSignature = [
+      assets.t1_copc_url,
+      assets.t2_aligned_copc_url,
+      assets.change_copc_url,
+    ].join("|");
+    const shouldFitOnLoad = assetSignature !== assetSignatureRef.current;
+    assetSignatureRef.current = assetSignature;
 
     const sources = [
       visibility.t1 ? assets.t1_copc_url : "",
@@ -160,7 +169,7 @@ export function ViewerPanel() {
         for (const source of sources) {
           await lidarControl.loadPointCloud(source, { loadingMode: "dynamic" });
         }
-        if (sources.length > 0) {
+        if (sources.length > 0 && shouldFitOnLoad) {
           lidarControl.flyToPointCloud();
         }
       } catch (error) {

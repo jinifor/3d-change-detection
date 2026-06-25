@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Play, Upload } from "lucide-react";
+import { CircleHelp, Play, Upload } from "lucide-react";
 import { createProject, startJob, uploadFile } from "../api/client";
 import { useAppStore } from "../store/appStore";
 import type { ProcessingParameters, UploadName } from "../types";
@@ -10,18 +10,56 @@ const parameterFields: Array<{
   label: string;
   step: number;
   min: number;
+  description: string;
 }> = [
-  { key: "voxel_size_m", label: "Voxel Size", step: 0.1, min: 0.01 },
-  { key: "m3c2_scale_m", label: "M3C2 Scale", step: 0.1, min: 0.01 },
-  { key: "normal_radius_m", label: "Normal Radius", step: 0.1, min: 0.01 },
-  { key: "distance_threshold_m", label: "Distance Threshold", step: 0.01, min: 0.001 },
-  { key: "cluster_size_m", label: "Cluster Size", step: 0.1, min: 0.01 },
-  { key: "cluster_min_samples", label: "Cluster Min Samples", step: 1, min: 1 },
+  {
+    key: "voxel_size_m",
+    label: "Voxel Size",
+    step: 0.01,
+    min: 0.01,
+    description: "Downsample spacing in meters for stable-surface registration and M3C2 core points.",
+  },
+  {
+    key: "m3c2_scale_m",
+    label: "M3C2 Scale",
+    step: 0.01,
+    min: 0.01,
+    description: "Search radius in meters used by M3C2 to measure distance between T1 and T2 surfaces.",
+  },
+  {
+    key: "normal_radius_m",
+    label: "Normal Radius",
+    step: 0.01,
+    min: 0.01,
+    description: "Neighborhood radius in meters used to estimate surface normals for M3C2.",
+  },
+  {
+    key: "distance_threshold_m",
+    label: "Distance Threshold",
+    step: 0.01,
+    min: 0.01,
+    description: "Minimum absolute M3C2 distance in meters required to mark a point as changed.",
+  },
+  {
+    key: "cluster_size_m",
+    label: "Cluster Size",
+    step: 0.01,
+    min: 0.01,
+    description: "DBSCAN distance in meters used to merge nearby changed points into one candidate.",
+  },
+  {
+    key: "cluster_min_samples",
+    label: "Cluster Min Samples",
+    step: 1,
+    min: 1,
+    description: "Minimum number of changed points required to keep a candidate cluster.",
+  },
   {
     key: "registration_rmse_threshold_m",
     label: "Registration RMSE",
     step: 0.01,
-    min: 0.001,
+    min: 0.01,
+    description: "Maximum ICP registration RMSE in meters before the pipeline asks whether to continue.",
   },
 ];
 
@@ -118,8 +156,22 @@ export function SetupPanel() {
       <div className="parameter-grid">
         {parameterFields.map((field) => (
           <label key={field.key}>
-            <span>{field.label}</span>
+            <span className="parameter-label">
+              <span>{field.label}</span>
+              <span
+                aria-label={field.description}
+                className="help-tooltip"
+                tabIndex={0}
+                title={field.description}
+              >
+                <CircleHelp size={13} />
+                <span className="tooltip-bubble" role="tooltip">
+                  {field.description}
+                </span>
+              </span>
+            </span>
             <input
+              inputMode={field.step === 1 ? "numeric" : "decimal"}
               min={field.min}
               step={field.step}
               type="number"
