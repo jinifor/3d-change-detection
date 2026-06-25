@@ -65,16 +65,110 @@ def _pdal_info(path: Path) -> dict[str, Any]:
 
 
 def _extract_epsg(data: dict[str, Any]) -> int | None:
-    text = json.dumps(data)
-    patterns = [
-        r"EPSG[\"':,\s/]+(\d{4,6})",
+    for srs_json in _iter_srs_json(data):
+        epsg = _extract_epsg_from_srs_json(srs_json)
+        if epsg is not None:
+            return epsg
+
+    for srs_text in _iter_srs_text(data):
+        epsg = _extract_epsg_from_srs_text(srs_text)
+        if epsg is not None:
+            return epsg
+
+    return None
+
+
+def _iter_srs_json(value: Any) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            key_lower = str(key).lower()
+            if key_lower == "stats":
+                continue
+            if key_lower == "srs" and isinstance(item, dict):
+                srs_json = item.get("json")
+                if isinstance(srs_json, dict):
+                    candidates.append(srs_json)
+            candidates.extend(_iter_srs_json(item))
+    elif isinstance(value, list):
+        for item in value:
+            candidates.extend(_iter_srs_json(item))
+    return candidates
+
+
+def _extract_epsg_from_srs_json(value: dict[str, Any]) -> int | None:
+    epsg = _extract_epsg_from_id(value.get("id"))
+    if epsg is not None:
+        return epsg
+
+    for key in ("base_crs", "source_crs", "target_crs"):
+        item = value.get(key)
+        if isinstance(item, dict):
+            epsg = _extract_epsg_from_srs_json(item)
+            if epsg is not None:
+                return epsg
+
+    components = value.get("components")
+    if isinstance(components, list):
+        for item in components:
+            if isinstance(item, dict):
+                epsg = _extract_epsg_from_srs_json(item)
+                if epsg is not None:
+                    return epsg
+
+    return None
+
+
+def _extract_epsg_from_id(value: Any) -> int | None:
+    if not isinstance(value, dict):
+        return None
+    authority = value.get("authority")
+    code = value.get("code")
+    if isinstance(authority, str) and authority.upper() == "EPSG" and code is not None:
+        return int(code)
+    return None
+
+
+def _iter_srs_text(value: Any) -> list[str]:
+    candidates: list[str] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            key_lower = str(key).lower()
+            if key_lower == "stats":
+                continue
+            if key_lower in {
+                "spatialreference",
+                "comp_spatialreference",
+                "wkt",
+                "compoundwkt",
+                "gtiff",
+            }:
+                if isinstance(item, str):
+                    candidates.append(item)
+            candidates.extend(_iter_srs_text(item))
+    elif isinstance(value, list):
+        for item in value:
+            candidates.extend(_iter_srs_text(item))
+    return candidates
+
+
+def _extract_epsg_from_srs_text(value: str) -> int | None:
+    projected = re.search(r"ProjectedCSTypeGeoKey.*?Code-(\d{4,6})", value, flags=re.IGNORECASE)
+    if projected:
+        return int(projected.group(1))
+
+    authority_matches = re.findall(
         r"AUTHORITY\[\s*\"EPSG\"\s*,\s*\"(\d{4,6})\"\s*\]",
-        r'"authority"\s*:\s*"EPSG"\s*,\s*"code"\s*:\s*"?(?P<code>\d{4,6})"?',
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text, flags=re.IGNORECASE)
-        if match:
-            return int(match.group("code") if "code" in match.groupdict() else match.group(1))
+        value,
+        flags=re.IGNORECASE,
+    )
+    if authority_matches:
+        return int(authority_matches[-1])
+
+    epsg = re.search(r"EPSG[\"':,\s/]+(\d{4,6})", value, flags=re.IGNORECASE)
+    if epsg:
+        return int(epsg.group(1))
+
     return None
 
 
