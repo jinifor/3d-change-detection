@@ -8,6 +8,10 @@ class ProjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 
 
+class ProjectUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
 class UploadTarget(BaseModel):
     object_key: str
     url: str

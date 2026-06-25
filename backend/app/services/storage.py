@@ -98,6 +98,16 @@ class StorageClient:
     def upload_file(self, path: Path, object_key: str) -> None:
         self.client.upload_file(str(path), settings.minio_bucket, object_key)
 
+    def delete_prefix(self, prefix: str) -> None:
+        paginator = self.client.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=settings.minio_bucket, Prefix=prefix):
+            objects = [{"Key": item["Key"]} for item in page.get("Contents", [])]
+            if objects:
+                self.client.delete_objects(
+                    Bucket=settings.minio_bucket,
+                    Delete={"Objects": objects},
+                )
+
 
 @lru_cache
 def get_storage_client() -> StorageClient:

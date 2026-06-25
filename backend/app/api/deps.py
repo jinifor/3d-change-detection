@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from fastapi import Depends, Header, HTTPException, Query, status
+from fastapi import Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings

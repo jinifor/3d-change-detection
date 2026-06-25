@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_api_key
@@ -14,6 +14,7 @@ from app.schemas import (
     ProjectAssetsRead,
     ProjectCreate,
     ProjectRead,
+    ProjectUpdate,
     ProjectUploadRead,
 )
 from app.services.jobs import enqueue_project_job
@@ -21,8 +22,11 @@ from app.services.projects import (
     complete_multipart_upload,
     create_project_with_upload_urls,
     create_multipart_upload,
+    delete_project,
     get_project_assets,
+    list_projects,
     list_project_candidates,
+    update_project_name,
 )
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
@@ -33,12 +37,50 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db)) -> Pro
     return create_project_with_upload_urls(db, payload)
 
 
+@router.get("", response_model=list[ProjectRead])
+def read_projects(
+    project_status: str | None = Query(default=None, alias="status"),
+    db: Session = Depends(get_db),
+) -> list[Project]:
+    return list_projects(db, project_status)
+
+
 @router.get("/{project_id}", response_model=ProjectRead)
 def read_project(project_id: str, db: Session = Depends(get_db)) -> Project:
     project = db.get(Project, project_id)
     if project is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found")
     return project
+
+
+@router.patch("/{project_id}", response_model=ProjectRead)
+def update_project(
+    project_id: str,
+    payload: ProjectUpdate,
+    db: Session = Depends(get_db),
+) -> Project:
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="name is required",
+        )
+    project = update_project_name(db, project_id, name)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found")
+    return project
+
+
+@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_project(project_id: str, db: Session = Depends(get_db)) -> None:
+    result = delete_project(db, project_id)
+    if result == "not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="project not found")
+    if result == "active_job":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="project has an active job",
+        )
 
 
 @router.post("/{project_id}/jobs", response_model=JobRead, status_code=status.HTTP_202_ACCEPTED)

@@ -1,5 +1,9 @@
 class StorageKeys:
     @staticmethod
+    def project_prefix(project_id: str) -> str:
+        return f"project/{project_id}/"
+
+    @staticmethod
     def raw_t1(project_id: str) -> str:
         return f"project/{project_id}/raw/t1.laz"
 

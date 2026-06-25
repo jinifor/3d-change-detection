@@ -1,6 +1,10 @@
+import shutil
+from typing import Literal
+
 from sqlalchemy.orm import Session
 
 from app.db.models import Candidate, Project
+from app.processing.paths import WorkPaths
 from app.processing.storage_keys import StorageKeys
 from app.schemas import (
     MultipartPartTarget,
@@ -13,6 +17,16 @@ from app.schemas import (
     UploadTarget,
 )
 from app.services.storage import get_storage_client
+
+ProjectDeleteResult = Literal["deleted", "not_found", "active_job"]
+TERMINAL_JOB_STATUSES = {"COMPLETED", "FAILED"}
+
+
+def list_projects(db: Session, status: str | None = None) -> list[Project]:
+    query = db.query(Project)
+    if status:
+        query = query.filter(Project.status == status)
+    return query.order_by(Project.updated_at.desc()).all()
 
 
 def create_project_with_upload_urls(db: Session, payload: ProjectCreate) -> ProjectUploadRead:
@@ -31,6 +45,32 @@ def create_project_with_upload_urls(db: Session, payload: ProjectCreate) -> Proj
             "t2": UploadTarget(object_key=t2_key, url=storage.presigned_put_url(t2_key)),
         },
     )
+
+
+def update_project_name(db: Session, project_id: str, name: str) -> Project | None:
+    project = db.get(Project, project_id)
+    if project is None:
+        return None
+    project.name = name
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def delete_project(db: Session, project_id: str) -> ProjectDeleteResult:
+    project = db.get(Project, project_id)
+    if project is None:
+        return "not_found"
+    if any(job.status not in TERMINAL_JOB_STATUSES for job in project.jobs):
+        return "active_job"
+
+    storage = get_storage_client()
+    storage.delete_prefix(StorageKeys.project_prefix(project_id))
+    shutil.rmtree(WorkPaths.for_project(project_id).root, ignore_errors=True)
+
+    db.delete(project)
+    db.commit()
+    return "deleted"
 
 
 def list_project_candidates(db: Session, project_id: str) -> list[Candidate]:
